@@ -3,6 +3,9 @@ from django.db import models
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.db.models.loading import get_model
 from django.utils import simplejson
+from datetime import *
+from django.utils import formats
+from decimal import *
 
 from factory_search_filter import *
 
@@ -77,10 +80,52 @@ class django_jqgrid(object):
 
     def add_object(self, request):
 
+        new_object = self.model()
+
+        for field in self.fields:
+
+            if request.POST.get(field) != '':
+                data_type = self.model._meta.get_field(field).get_internal_type()
+                new_object[field] = self.__rescue_convert_data(data_type, field, request)
+
+        return new_object.save()
 
 
+    def edit_object(self, object_id, request):
 
-    def edit_object(self, request):
+        object_for_update = self.model.objects.get(id = object_id)
+
+        for field in self.fields:
+
+            if request.POST.get(field) != '':
+                data_type = self.model._meta.get_field(field).get_internal_type()
+                object_for_update[field] = self.__rescue_convert_data(data_type, field, request)
+
+        return object_for_update.save()
 
 
-    def delete_object(self, id):
+    def delete_object(self, object_id):
+        try:
+            self.model.objects.get(id = object_id).delete()
+            return True
+        except:
+            return False
+
+        
+    #Private Method. Do not Touch!
+    def __rescue_convert_data(self, data_type, field, request):
+
+        if data_type in ['IntegerField', 'BigIntegerField', 'PositiveIntegerField', 'SmallIntegerField']:
+                return int(request.POST.get(field))
+
+        elif data_type in ['DecimalField']:
+            return Decimal(request.POST.get(field))
+
+        elif data_type in ['FloatField']:
+            return float(request.POST.get(field))
+
+        elif data_type in ['DateField', 'DateTimeField', 'TimeField']:
+            return datetime.strptime(request.POST.get(field),
+                                                  formats.date_format(field, "SHORT_DATETIME_FORMAT")),
+        else:
+            return request.POST.get(field)
