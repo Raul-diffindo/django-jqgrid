@@ -12,7 +12,8 @@ from factory_search_filter import *
 
 class django_jqgrid(object):
 
-    def __init__(self, app_label, model_name, models_fields_selected = []):
+    def __init__(self, app_label, model_name, url, models_fields_selected = [], edit_url = '', table_id = '', div_id = '',
+                 data_type = 'json', caption = ''):
 
         #App
         self.app = app_label
@@ -25,6 +26,13 @@ class django_jqgrid(object):
             self.fields = models_fields_selected
         else:
             self.fields = self.model._meta.get_all_field_names()
+
+        self.url = url
+        self.edit_url = edit_url
+        self.table_id = table_id
+        self.div_id = div_id
+        self.data_type = data_type
+        self.caption = caption
 
 
     def get_objects(self, page = 1, limit = '', sidx = '', sord = '', search = '', searchField = False,
@@ -68,8 +76,28 @@ class django_jqgrid(object):
             i += 1
 
         results = {'page': page, 'total': paginator.num_pages, 'records': num_objects, 'rows': lines}
-        return simplejson.dumps(results, indent=4)
 
+        if self.data_type == 'xml':
+            return self.__serialize_toxml(results)
+        else:
+            return simplejson.dumps(results, indent=4)
+
+
+    #Private Method. Do not Touch!
+    def __serialize_toxml(self, root):
+        xml = ''
+        for key in root.keys():
+            if isinstance(root[key], dict):
+                xml = '%s<%s>\n%s</%s>\n' % (xml, key, self.__serialize_toxml(root[key]), key)
+            elif isinstance(root[key], list):
+                xml = '%s<%s>' % (xml, key)
+                for item in root[key]:
+                    xml = '%s%s' % (xml, self.__serialize_toxml(item))
+                xml = '%s</%s>' % (xml, key)
+            else:
+                value = root[key]
+                xml = '%s<%s>%s</%s>\n' % (xml, key, value, key)
+        return xml
 
 
     def search_objects(self, searchField, searchOper, searchString):
@@ -129,3 +157,56 @@ class django_jqgrid(object):
                                                   formats.date_format(field, "SHORT_DATETIME_FORMAT")),
         else:
             return request.POST.get(field)
+
+
+    def get_colmodel(self):
+        colModel = []
+
+        for field in self.fields:
+            colModel.append(self.__colmodel_of_field(field))
+
+        return str(colModel)
+
+
+    #Private Method. Do not Touch!
+    def __colmodel_of_field(self, field):
+        default_colModel = {
+            'name': field,
+            'index': field,
+            'width': 100,
+            'editable': True,
+        }
+        return default_colModel
+
+
+    def get_colnames(self):
+        colNames = []
+
+        for field in self.fields:
+            colNames.append(field.capitalize())
+
+        return str(colNames)
+
+
+    def get_id_tablegrid(self):
+        if not self.table_id == '': return self.table_id
+        return self.app + '-' + self.model._meta + '-grid'
+
+
+    def get_id_divgrid(self):
+        if not self.div_id == '': return self.div_id
+        return self.app + '-' + self.model._meta
+
+
+    def get_edit_url(self):
+        return self.edit_url
+
+
+    def get_caption(self):
+        if not self.caption == '': return self.caption
+        return self.model._meta
+
+
+    def get_data_type(self):
+        return self.data_type
+
