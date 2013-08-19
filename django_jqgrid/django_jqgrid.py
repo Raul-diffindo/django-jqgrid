@@ -6,6 +6,7 @@ from django.utils import simplejson
 from datetime import *
 from django.utils import formats
 from decimal import *
+import unicodedata
 
 from factory_search_filter import *
 
@@ -171,10 +172,10 @@ class django_jqgrid(object):
     #Private Method. Do not Touch!
     def __colmodel_of_field(self, field):
         default_colModel = {
-            'name': field,
-            'index': field,
+            'name': field.encode('ascii','ignore'),
+            'index': field.encode('ascii','ignore'),
             'width': 100,
-            'editable': True,
+            'editable': 'true',
         }
         return default_colModel
 
@@ -183,19 +184,19 @@ class django_jqgrid(object):
         colNames = []
 
         for field in self.fields:
-            colNames.append(field.capitalize())
+            colNames.append(field.encode('ascii','ignore').capitalize())
 
-        return str(colNames)
+        return str(colNames).encode('ascii', 'xmlcharrefreplace')
 
 
     def get_id_tablegrid(self):
         if not self.table_id == '': return self.table_id
-        return self.app + '-' + self.model._meta + '-grid'
+        return self.app + '-' + self.model._meta.verbose_name_plural + '-grid'
 
 
     def get_id_divgrid(self):
         if not self.div_id == '': return self.div_id
-        return self.app + '-' + self.model._meta
+        return self.app + '-' + self.model._meta.verbose_name_plural
 
 
     def get_edit_url(self):
@@ -204,7 +205,7 @@ class django_jqgrid(object):
 
     def get_caption(self):
         if not self.caption == '': return self.caption
-        return self.model._meta
+        return self.model._meta.verbose_name_plural
 
 
     def get_data_type(self):
