@@ -27,6 +27,7 @@ class django_jqgrid(object):
             self.fields = models_fields_selected
         else:
             self.fields = self.model._meta.get_all_field_names()
+            self.fields.remove(u'id')
 
         self.url = url
         self.edit_url = edit_url
@@ -71,7 +72,7 @@ class django_jqgrid(object):
             }
 
             for field in self.fields:
-                line['cell'].append(row.field)
+                line['cell'].append(self.__convert_data(getattr(row, field)))
 
             lines.append(line)
             i += 1
@@ -82,6 +83,21 @@ class django_jqgrid(object):
             return self.__serialize_toxml(results)
         else:
             return simplejson.dumps(results, indent=4)
+
+
+
+    #Private Method. Do not Touch!
+    def __convert_data(self, field):
+
+        if type(field).__name__ in ['IntegerField', 'BigIntegerField', 'PositiveIntegerField', 'SmallIntegerField']:
+                return str(field)
+
+        elif type(field).__name__ in ['DateField', 'DateTimeField', 'TimeField']:
+            return field.strftime(formats.date_format(field, "SHORT_DATETIME_FORMAT"))
+
+        else:
+            return str(field)
+
 
 
     #Private Method. Do not Touch!
@@ -161,7 +177,7 @@ class django_jqgrid(object):
 
 
     def get_colmodel(self):
-        colModel = []
+        colModel = [{'name':'id','index':'id','width':40, 'search': 'false', 'align':'center', 'editable': 'false',} ]
 
         for field in self.fields:
             colModel.append(self.__colmodel_of_field(field))
@@ -181,7 +197,7 @@ class django_jqgrid(object):
 
 
     def get_colnames(self):
-        colNames = []
+        colNames = ['N']
 
         for field in self.fields:
             colNames.append(field.encode('ascii','ignore').capitalize())
