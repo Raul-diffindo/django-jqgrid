@@ -89,10 +89,7 @@ class django_jqgrid(object):
     #Private Method. Do not Touch!
     def __convert_data(self, field):
 
-        if type(field).__name__ in ['IntegerField', 'BigIntegerField', 'PositiveIntegerField', 'SmallIntegerField']:
-                return str(field)
-
-        elif type(field).__name__ in ['DateField', 'DateTimeField', 'TimeField']:
+        if type(field).__name__ in ['DateField', 'DateTimeField', 'TimeField']:
             return field.strftime(formats.date_format(field, "SHORT_DATETIME_FORMAT"))
 
         else:
