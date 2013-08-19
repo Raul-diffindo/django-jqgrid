@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>testing django-jqgrid</title>
+
+    <script src="/static/js/jquery-2.0.3.min.js"></script>
+
+    <link href="/static/js/jqgrid/css/ui.jqgrid.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="/static/js/jqgrid/jquery.jqGrid.min.js"></script>
+
+</head>
+<body>
+
+<table id="{{ jqgrid_table_id }}"></table> <div id="{{ jqgrid_div_id }}"></div>
+
+	<script>
+        jQuery("#{{ jqgrid_table_id }}").jqGrid({ url:'{{ jqgrid_url }}', datatype: "{{ jqgrid_datatype }}",
+
+            colNames:{{ jqgrid_colnames|safe  }},
+
+            colModel: {{ jqgrid_colmodel|safe  }},
+
+            rowNum:20, rowList:[10,20,30,50,100],
+            pager: '#{{ jqgrid_div_id }}',
+            sortname: 'id',
+            viewrecords: true,
+            sortorder: "desc",
+            caption:"{{ jqgrid_caption }}",
+            height: 370,
+            width: 1500,
+
+            editurl:"{{ jqgrid_edit_url }}",
+        });
+
+    </script>
+
+</body>
+</html>
