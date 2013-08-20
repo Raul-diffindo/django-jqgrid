@@ -4,11 +4,11 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.decorators.http import require_http_methods
 
-from django_jqgrid.django_jqgrid import django_jqgrid
+from django_jqgrid.django_jqgrid import DjangoJqgrid
 
 def test(request):
 
-    my_django_jqgrid = django_jqgrid('app_test', 'Customer', '/test/get_customers', edit_url = '/test/edit_customer',
+    my_django_jqgrid = DjangoJqgrid('app_test', 'Customer', '/test/get_customers', edit_url = '/test/edit_customer',
                                      data_type = 'json')
 
     context = {
@@ -28,7 +28,7 @@ def test(request):
 
 @require_http_methods(["GET"])
 def get_customers(request):
-    my_django_jqgrid = django_jqgrid('app_test', 'Customer', '/test/get_customers', edit_url = '/test/edit_customer',
+    my_django_jqgrid = DjangoJqgrid('app_test', 'Customer', '/test/get_customers', edit_url = '/test/edit_customer',
                                      data_type = 'json')
 
 
