@@ -180,15 +180,19 @@ class DjangoJqgrid(object):
         jqGrid edit method control. Edit an existing object of the model.
         Return the object edited.
         """
-        object_for_update = self.model.objects.get(id = object_id)
+        try:
+            object_for_update = self.model.objects.get(id = object_id)
 
-        for field in self.fields:
+            for field in self.fields:
+                if request.POST.get(field) != '':
+                    data_type = self.model._meta.get_field(field).get_internal_type()
+                    setattr(object_for_update, field, self.__rescue_convert_data(data_type, field, request))
 
-            if request.POST.get(field) != '':
-                data_type = self.model._meta.get_field(field).get_internal_type()
-                object_for_update[field] = self.__rescue_convert_data(data_type, field, request)
+            object_for_update.save()
+            return True
 
-        return object_for_update.save()
+        except:
+            return False
 
 
     def delete_object(self, object_id):
@@ -209,16 +213,16 @@ class DjangoJqgrid(object):
         Private method to convert data from jqGrid to model fields.
         """
 
-        if data_type in ['IntegerField', 'BigIntegerField', 'PositiveIntegerField', 'SmallIntegerField']:
+        if data_type in ['Integer', 'BigInteger', 'PositiveInteger', 'SmallInteger']:
                 return int(request.POST.get(field))
 
-        elif data_type in ['DecimalField']:
+        elif data_type in ['Decimal']:
             return Decimal(request.POST.get(field))
 
-        elif data_type in ['FloatField']:
+        elif data_type in ['Float']:
             return float(request.POST.get(field))
 
-        elif data_type in ['DateField', 'DateTimeField', 'TimeField']:
+        elif data_type in ['Date', 'DateTime', 'Time']:
             return datetime.strptime(request.POST.get(field),
                                                   formats.date_format(field, "SHORT_DATETIME_FORMAT")),
         else:
@@ -229,12 +233,12 @@ class DjangoJqgrid(object):
         """
         From fields of model return the jqGrid colModel field.
         """
-        colModel = [{'name':'id','index':'id','width':40, 'search': 'false', 'align':'center', 'editable': 'false',} ]
+        colModel = [{'name':'id','index':'id','width':40, 'search': False, 'align':'center', 'editable': False,} ]
 
         for field in self.fields:
             colModel.append(self.__colmodel_of_field(field))
 
-        return str(colModel)
+        return str(colModel).lower()
 
 
     #Private Method. Do not Touch!
@@ -246,8 +250,9 @@ class DjangoJqgrid(object):
             'name': field.encode('ascii','ignore'),
             'index': field.encode('ascii','ignore'),
             'width': 100,
-            'editable': 'true',
+            'editable': True,
         }
+
         return default_colModel
 
 
