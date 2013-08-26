@@ -163,16 +163,20 @@ class DjangoJqgrid(object):
         jqGrid add method control. Add a new object into model.
         Return the new object created.
         """
+        try:
+            new_object = self.model()
 
-        new_object = self.model()
+            for field in self.fields:
 
-        for field in self.fields:
+                if request.POST.get(field) != '':
+                    data_type = self.model._meta.get_field(field).get_internal_type()
+                    setattr(new_object, field, self.__rescue_convert_data(data_type, field, request))
 
-            if request.POST.get(field) != '':
-                data_type = self.model._meta.get_field(field).get_internal_type()
-                new_object[field] = self.__rescue_convert_data(data_type, field, request)
+            new_object.save()
+            return True
 
-        return new_object.save()
+        except:
+            return False
 
 
     def edit_object(self, object_id, request):
@@ -191,7 +195,8 @@ class DjangoJqgrid(object):
             object_for_update.save()
             return True
 
-        except:
+        except Exception as e:
+            assert False, data_type
             return False
 
 
@@ -213,18 +218,30 @@ class DjangoJqgrid(object):
         Private method to convert data from jqGrid to model fields.
         """
 
-        if data_type in ['Integer', 'BigInteger', 'PositiveInteger', 'SmallInteger']:
+        if data_type in ['IntegerField', 'BigIntegerField', 'PositiveIntegerField', 'SmallIntegerField']:
+            try:
                 return int(request.POST.get(field))
+            except:
+                return 0
 
         elif data_type in ['Decimal']:
-            return Decimal(request.POST.get(field))
+            try:
+                return Decimal(request.POST.get(field))
+            except:
+                return Decimal(0)
 
         elif data_type in ['Float']:
-            return float(request.POST.get(field))
+            try:
+                return float(request.POST.get(field))
+            except:
+                return 0.0
 
         elif data_type in ['Date', 'DateTime', 'Time']:
-            return datetime.strptime(request.POST.get(field),
-                                                  formats.date_format(field, "SHORT_DATETIME_FORMAT")),
+            try:
+                return datetime.strptime(request.POST.get(field),
+                                        formats.date_format(field, "SHORT_DATETIME_FORMAT")),
+            except:
+                return datetime.utcnow()
         else:
             return request.POST.get(field)
 

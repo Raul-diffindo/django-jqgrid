@@ -46,13 +46,35 @@ def get_customers(request):
 
 @require_http_methods(["GET", "POST"])
 def edit_customer(request):
-    if(request.POST.get('oper') == 'edit' and request.POST.get('id') != ''):
-        my_django_jqgrid = DjangoJqgrid('app_test', 'Customer', '/test/get_customers', edit_url = '/test/edit_customer',
+
+    my_django_jqgrid = DjangoJqgrid('app_test', 'Customer', '/test/get_customers', edit_url = '/test/edit_customer',
                                      data_type = 'json')
 
-        if my_django_jqgrid.edit_object(request.POST.get('id'), request):
+    if(request.POST.get('oper') == 'edit'):
+
+        if request.POST.get('id') != '':
+            if my_django_jqgrid.edit_object(request.POST.get('id'), request):
+                return HttpResponse(mimetype="application/x-javascript", status=200)
+            else:
+                return HttpResponse(mimetype="application/x-javascript", status=420)
+        else:
+            return HttpResponse(mimetype="application/x-javascript", status=406)
+
+    elif (request.POST.get('oper') == 'add'):
+
+        if my_django_jqgrid.add_object(request):
             return HttpResponse(mimetype="application/x-javascript", status=200)
         else:
             return HttpResponse(mimetype="application/x-javascript", status=420)
+
+    elif (request.POST.get('oper') == 'del'):
+        if request.POST.get('id') != '':
+            if my_django_jqgrid.delete_object(request.POST.get('id')):
+                return HttpResponse(mimetype="application/x-javascript", status=200)
+            else:
+                return HttpResponse(mimetype="application/x-javascript", status=420)
+        else:
+            return HttpResponse(mimetype="application/x-javascript", status=406)
+
     else:
         return HttpResponse(mimetype="application/x-javascript", status=405)

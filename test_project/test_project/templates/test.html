@@ -57,8 +57,23 @@
                 return [true, ''];
             },
         },
-        {width: 600, height: 500},
-        {width: 600, height: 500}
+        {width: 600, height: 500,
+            onclickSubmit: function(rowid){
+                var val = $('input[name=csrfmiddlewaretoken]').attr('value');
+                return {csrfmiddlewaretoken:val};
+            },
+        },
+        {width: 600, height: 500,
+            beforeSubmit: function(postdata) {
+                // you should modify the next line to get the CSRF tocken
+                // in any way (for example $('meta[name=csrf]').attr('content')
+                // if you have <meta name="csrf" content="abcdefjklmnopqrstuvwxyz="/>)
+                var csrf_token = $('input[name=csrfmiddlewaretoken]').attr('value'); // any way to get
+                postdata['csrfmiddlewaretoken']= csrf_token;
+
+                return [true, ''];
+            },
+        }
         );
 
     </script>
