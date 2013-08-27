@@ -253,13 +253,22 @@ class DjangoJqgrid(object):
         colModel = [{'name':'id','index':'id','width':40, 'search': False, 'align':'center', 'editable': False,} ]
 
         for field in self.fields:
-            colModel.append(self.__colmodel_of_field(field))
+            colModel.append(self.__colmodel_of_field(field, self.model._meta.get_field(field).get_internal_type()))
 
-        return str(colModel).lower()
+        return self.__adjust_colmodel_string(colModel)
 
+
+    def __adjust_colmodel_string(self, colModel):
+        replace_list = [("'sopt'", "sopt")]
+        colModel_string = str(colModel).lower()
+
+        for replace in replace_list:
+            colModel_string = colModel_string.replace(replace[0], replace[1])
+
+        return colModel_string
 
     #Private Method. Do not Touch!
-    def __colmodel_of_field(self, field):
+    def __colmodel_of_field(self, field, data_type):
         """
         Private method to compose one field of jqGrid colModel field.
         """
@@ -270,7 +279,26 @@ class DjangoJqgrid(object):
             'editable': True,
         }
 
+        search_options = self.__get_field_search_options(data_type)
+        if search_options:
+            default_colModel['search'] = True
+            default_colModel['searchoptions'] = search_options
+        else:
+            default_colModel['search'] = False
+
         return default_colModel
+
+    def __get_field_search_options(self, data_type):
+        """
+        Private method to get the search options string for a field type.
+        """
+        if data_type in ['IntegerField', 'BigIntegerField', 'PositiveIntegerField', 'SmallIntegerField',
+                         'DateField', 'DateTimeField', 'TimeField', 'DecimalField', 'FloatField']:
+            return {"sopt":["eq", "ne", "lt", "le", "gt", "ge"]}
+        elif data_type in ['CharField']:
+            return {"sopt":["bw", "bn", "in", "ni", "ew", "en", "cn", "nc"]}
+        else:
+            return None
 
 
     def get_colnames(self):
