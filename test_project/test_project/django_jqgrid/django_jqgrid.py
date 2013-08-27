@@ -196,7 +196,6 @@ class DjangoJqgrid(object):
             return True
 
         except Exception as e:
-            assert False, data_type
             return False
 
 
