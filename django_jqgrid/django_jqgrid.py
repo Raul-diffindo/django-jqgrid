@@ -163,16 +163,20 @@ class DjangoJqgrid(object):
         jqGrid add method control. Add a new object into model.
         Return the new object created.
         """
+        try:
+            new_object = self.model()
 
-        new_object = self.model()
+            for field in self.fields:
 
-        for field in self.fields:
+                if request.POST.get(field) != '':
+                    data_type = self.model._meta.get_field(field).get_internal_type()
+                    setattr(new_object, field, self.__rescue_convert_data(data_type, field, request))
 
-            if request.POST.get(field) != '':
-                data_type = self.model._meta.get_field(field).get_internal_type()
-                new_object[field] = self.__rescue_convert_data(data_type, field, request)
+            new_object.save()
+            return True
 
-        return new_object.save()
+        except:
+            return False
 
 
     def edit_object(self, object_id, request):
@@ -191,7 +195,8 @@ class DjangoJqgrid(object):
             object_for_update.save()
             return True
 
-        except:
+        except Exception as e:
+            assert False, data_type
             return False
 
 
@@ -213,18 +218,30 @@ class DjangoJqgrid(object):
         Private method to convert data from jqGrid to model fields.
         """
 
-        if data_type in ['Integer', 'BigInteger', 'PositiveInteger', 'SmallInteger']:
+        if data_type in ['IntegerField', 'BigIntegerField', 'PositiveIntegerField', 'SmallIntegerField']:
+            try:
                 return int(request.POST.get(field))
+            except:
+                return 0
 
         elif data_type in ['Decimal']:
-            return Decimal(request.POST.get(field))
+            try:
+                return Decimal(request.POST.get(field))
+            except:
+                return Decimal(0)
 
         elif data_type in ['Float']:
-            return float(request.POST.get(field))
+            try:
+                return float(request.POST.get(field))
+            except:
+                return 0.0
 
         elif data_type in ['Date', 'DateTime', 'Time']:
-            return datetime.strptime(request.POST.get(field),
-                                                  formats.date_format(field, "SHORT_DATETIME_FORMAT")),
+            try:
+                return datetime.strptime(request.POST.get(field),
+                                        formats.date_format(field, "SHORT_DATETIME_FORMAT")),
+            except:
+                return datetime.utcnow()
         else:
             return request.POST.get(field)
 
@@ -236,13 +253,22 @@ class DjangoJqgrid(object):
         colModel = [{'name':'id','index':'id','width':40, 'search': False, 'align':'center', 'editable': False,} ]
 
         for field in self.fields:
-            colModel.append(self.__colmodel_of_field(field))
+            colModel.append(self.__colmodel_of_field(field, self.model._meta.get_field(field).get_internal_type()))
 
-        return str(colModel).lower()
+        return self.__adjust_colmodel_string(colModel)
 
+
+    def __adjust_colmodel_string(self, colModel):
+        replace_list = [("'sopt'", "sopt")]
+        colModel_string = str(colModel).lower()
+
+        for replace in replace_list:
+            colModel_string = colModel_string.replace(replace[0], replace[1])
+
+        return colModel_string
 
     #Private Method. Do not Touch!
-    def __colmodel_of_field(self, field):
+    def __colmodel_of_field(self, field, data_type):
         """
         Private method to compose one field of jqGrid colModel field.
         """
@@ -251,9 +277,27 @@ class DjangoJqgrid(object):
             'index': field.encode('ascii','ignore'),
             'width': 100,
             'editable': True,
+            'search': True,
+
         }
 
+        search_options = self.__get_field_search_options(data_type)
+        if search_options:
+            default_colModel['searchoptions'] = search_options
+
         return default_colModel
+
+    def __get_field_search_options(self, data_type):
+        """
+        Private method to get the search options string for a field type.
+        """
+        if data_type in ['IntegerField', 'BigIntegerField', 'PositiveIntegerField', 'SmallIntegerField',
+                         'DateField', 'DateTimeField', 'TimeField', 'DecimalField', 'FloatField']:
+            return {"sopt":["eq", "ne", "lt", "le", "gt", "ge"]}
+        elif data_type in ['CharField']:
+            return {"sopt":["bw", "bn", "in", "ni", "ew", "en", "cn", "nc"]}
+        else:
+            return None
 
 
     def get_colnames(self):
