@@ -1,14 +1,10 @@
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.db.models.loading import get_model
 from django.utils import simplejson
-from datetime import *
-from django.utils import formats
 from decimal import *
-import unicodedata
 
 from factory_search_filter import *
+from fields import FieldDispatcher
 
 
 class DjangoJqgrid(object):
@@ -100,7 +96,7 @@ class DjangoJqgrid(object):
             }
 
             for field in self.fields:
-                line['cell'].append(self.__convert_data(getattr(row, field)))
+                line['cell'].append(self.__convert_data(field, getattr(row, field)))
 
             lines.append(line)
             i += 1
@@ -115,16 +111,17 @@ class DjangoJqgrid(object):
 
 
     #Private Method. Do not Touch!
-    def __convert_data(self, field):
+    def __convert_data(self, field, field_value):
         """
         Convert some Django Model fields to visualization in jqGrid correctly
         """
+        try:
+            return FieldDispatcher().convert_field_to_js(
+                self.model._meta.get_field(field).get_internal_type(),
+                field_value
+            )
 
-        if type(field).__name__ in ['DateField', 'DateTimeField', 'TimeField']:
-            return field.strftime(formats.date_format(field, "SHORT_DATETIME_FORMAT"))
-
-        else:
-            return str(field)
+        except (ValueError, InvalidOperation): raise ValueError
 
 
 
@@ -190,7 +187,8 @@ class DjangoJqgrid(object):
             for field in self.fields:
                 if request.POST.get(field) != '':
                     data_type = self.model._meta.get_field(field).get_internal_type()
-                    setattr(object_for_update, field, self.__rescue_convert_data(data_type, field, request))
+                    value = self.__rescue_convert_data(data_type, field, request)
+                    setattr(object_for_update, field, value)
 
             object_for_update.save()
             return True
@@ -216,33 +214,8 @@ class DjangoJqgrid(object):
         """
         Private method to convert data from jqGrid to model fields.
         """
+        return FieldDispatcher().convert_field_to_model(data_type, request.POST.get(field))
 
-        if data_type in ['IntegerField', 'BigIntegerField', 'PositiveIntegerField', 'SmallIntegerField']:
-            try:
-                return int(request.POST.get(field))
-            except:
-                return 0
-
-        elif data_type in ['Decimal']:
-            try:
-                return Decimal(request.POST.get(field))
-            except:
-                return Decimal(0)
-
-        elif data_type in ['Float']:
-            try:
-                return float(request.POST.get(field))
-            except:
-                return 0.0
-
-        elif data_type in ['Date', 'DateTime', 'Time']:
-            try:
-                return datetime.strptime(request.POST.get(field),
-                                        formats.date_format(field, "SHORT_DATETIME_FORMAT")),
-            except:
-                return datetime.utcnow()
-        else:
-            return request.POST.get(field)
 
 
     def get_colmodel(self):
@@ -291,13 +264,8 @@ class DjangoJqgrid(object):
         """
         Private method to get the search options string for a field type.
         """
-        if data_type in ['IntegerField', 'BigIntegerField', 'PositiveIntegerField', 'SmallIntegerField',
-                         'DateField', 'DateTimeField', 'TimeField', 'DecimalField', 'FloatField']:
-            return {"sopt":["eq", "ne", "lt", "le", "gt", "ge"]}
-        elif data_type in ['CharField']:
-            return {"sopt":["bw", "bn", "in", "ni", "ew", "en", "cn", "nc"]}
-        else:
-            return None
+        return FieldDispatcher().get_search_options(data_type)
+
 
 
     def get_colnames(self):
