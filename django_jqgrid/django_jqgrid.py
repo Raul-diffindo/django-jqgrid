@@ -277,13 +277,14 @@ class DjangoJqgrid(object):
             'index': field.encode('ascii','ignore'),
             'width': 100,
             'editable': True,
-            'search': True,
-
         }
 
         search_options = self.__get_field_search_options(data_type)
         if search_options:
+            default_colModel['search'] = True
             default_colModel['searchoptions'] = search_options
+        else:
+            default_colModel['search'] = False
 
         return default_colModel
 
