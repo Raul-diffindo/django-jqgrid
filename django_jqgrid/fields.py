@@ -216,3 +216,21 @@ class TextField(Field):
 
     def get_search_options(self):
         return {"sopt":["bw", "bn", "in", "ni", "ew", "en", "cn", "nc"]}
+
+
+class BooleanField(Field):
+
+    _affirmative_response = 'Yes'
+    _negative_response = 'No'
+    _list_affirmative_responses = ['yes', 'si', 'oui', 'da', 'ja']
+
+    def convert_field_to_js(self, field_value):
+        if field_value: return self._affirmative_response
+        else: return self._negative_response
+
+    def convert_field_to_model(self, field_value):
+        if field_value.lower() in self._list_affirmative_responses: return True
+        else: return False
+
+    def get_search_options(self):
+        return {"sopt":["eq", "ne", ]}
