@@ -15,6 +15,7 @@ class Customer(models.Model):
     city = models.CharField(max_length=50, null=True, db_index=True)
     telephone_number = models.CharField(max_length=15, null=True, default=' ')
     notes = models.TextField(null=True, default=' ')
+    active = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['customer_code']
