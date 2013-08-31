@@ -3,21 +3,42 @@ from decimal import *
 from datetime import *
 import dateutil.parser
 from django.utils import formats
+from django.db.models import Q
 
 #Dispathcer
 class FieldDispatcher(object):
 
-    def convert_field_to_js(self, data_type, field_value):
-        field_class = getattr(sys.modules[__name__], data_type)
-        return field_class().convert_field_to_js(field_value)
+    _relationship_fields = ['ForeignKey']
 
-    def convert_field_to_model(self, data_type, field_value):
-        field_class = getattr(sys.modules[__name__], data_type)
-        return field_class().convert_field_to_model(field_value)
+    def convert_field_to_js(self, model, field, data_type, field_value):
+        try:
+            field_class = getattr(sys.modules[__name__], data_type)
+            if not data_type in self._relationship_fields:
+                return field_class().convert_field_to_js(field_value)
+            else:
+                return field_class().convert_field_to_js(model, field, field_value)
+        except Exception as e:
+            raise NotImplementedError(e)
+
+
+    def convert_field_to_model(self, model, field, data_type, field_value):
+        try:
+            field_class = getattr(sys.modules[__name__], data_type)
+            if not data_type in self._relationship_fields:
+                return field_class().convert_field_to_model(field_value)
+            else:
+                return field_class().convert_field_to_model(model, field, field_value)
+        except Exception as e:
+            assert False, e
+            raise NotImplementedError(e)
+
 
     def get_search_options(self, data_type):
-        field_class = getattr(sys.modules[__name__], data_type)
-        return field_class().get_search_options()
+        try:
+            field_class = getattr(sys.modules[__name__], data_type)
+            return field_class().get_search_options()
+        except Exception as e:
+            raise NotImplementedError(e)
 
 
 ######################### Design Pattern ###########################
@@ -30,6 +51,19 @@ class Field(object):
         pass
 
     def convert_field_to_model(self, field_value):
+        pass
+
+    def get_search_options(self):
+        pass
+
+
+#Interface Relationship Fields:
+class RelationShipField(object):
+
+    def convert_field_to_js(self, model, field, field_value):
+        pass
+
+    def convert_field_to_model(self, model, field, field_value):
         pass
 
     def get_search_options(self):
@@ -231,6 +265,29 @@ class BooleanField(Field):
     def convert_field_to_model(self, field_value):
         if field_value.lower() in self._list_affirmative_responses: return True
         else: return False
+
+    def get_search_options(self):
+        return {"sopt":["eq", "ne", ]}
+
+
+#Concrete Relationship Fields
+
+class ForeignKey(RelationShipField):
+
+    def convert_field_to_js(self, model, field, field_value):
+        try:
+            return getattr(model.objects.filter(Q(**{ field : field_value}))[0], field).__unicode__()
+
+        except Exception as e: raise ValueError(e)
+
+
+    def convert_field_to_model(self, model, field, field_value):
+        try:
+            return model._meta.get_field(field).rel.to.objects.get(
+                Q(**{ model._meta.get_field(field).rel.to._meta.jqgrid_related_field : field_value})
+            )
+
+        except Exception as e: raise ValueError(e)
 
     def get_search_options(self):
         return {"sopt":["eq", "ne", ]}
