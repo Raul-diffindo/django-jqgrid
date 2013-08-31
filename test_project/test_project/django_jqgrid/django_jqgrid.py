@@ -117,11 +117,14 @@ class DjangoJqgrid(object):
         """
         try:
             return FieldDispatcher().convert_field_to_js(
+                self.model,
+                field,
                 self.model._meta.get_field(field).get_internal_type(),
                 field_value
             )
 
         except (ValueError, InvalidOperation): raise ValueError
+        except NotImplementedError: pass
 
 
 
@@ -172,7 +175,7 @@ class DjangoJqgrid(object):
             new_object.save()
             return True
 
-        except:
+        except Exception as e:
             return False
 
 
@@ -205,7 +208,7 @@ class DjangoJqgrid(object):
         try:
             self.model.objects.get(id = object_id).delete()
             return True
-        except:
+        except Exception as e:
             return False
 
         
@@ -214,7 +217,11 @@ class DjangoJqgrid(object):
         """
         Private method to convert data from jqGrid to model fields.
         """
-        return FieldDispatcher().convert_field_to_model(data_type, request.POST.get(field))
+        try:
+            return FieldDispatcher().convert_field_to_model(self.model,  field, data_type, request.POST.get(field))
+
+        except NotImplementedError:
+            pass
 
 
 
@@ -264,7 +271,10 @@ class DjangoJqgrid(object):
         """
         Private method to get the search options string for a field type.
         """
-        return FieldDispatcher().get_search_options(data_type)
+        try:
+            return FieldDispatcher().get_search_options(data_type)
+        except NotImplementedError:
+            pass
 
 
 

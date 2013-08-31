@@ -1,6 +1,20 @@
 from django.db import models
 from datetime import datetime
 
+class Group(models.Model):
+    created_at = models.DateTimeField(auto_now=True, default=datetime.now())
+    group_name = models.CharField(max_length=100, db_index=True, unique=True)
+
+    class Meta:
+        ordering = ['-group_name']
+        verbose_name_plural = u'Groups'
+
+    def __unicode__(self):
+        return u"%s" % self.group_name
+
+Group._meta.jqgrid_related_field = 'group_name'
+
+
 class Customer(models.Model):
     """
     Customer Model
@@ -16,6 +30,7 @@ class Customer(models.Model):
     telephone_number = models.CharField(max_length=15, null=True, default=' ')
     notes = models.TextField(null=True, default=' ')
     active = models.BooleanField(default=False)
+    group = models.ForeignKey(Group)
 
     class Meta:
         ordering = ['customer_code']
@@ -23,3 +38,5 @@ class Customer(models.Model):
 
     def __unicode__(self):
         return u"%s, %s, %s" % (self.customer_code, self.name, self.vat)
+
+
