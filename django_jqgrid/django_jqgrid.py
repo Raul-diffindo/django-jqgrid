@@ -237,9 +237,11 @@ class DjangoJqgrid(object):
 
     def __adjust_colmodel_string(self, colModel):
         replace_list = [("'sopt'", "sopt"), ("'formatter'", "formatter"), ("'formatoptions'", "formatoptions"),
-                        ("'baselinkurl'", "baselinkurl"), ("'showaction'", "showaction"),
+                        ("'baseLinkUrl'", "baseLinkUrl"), ("'addParam'", "addParam"), ("'target'", "target"),
+                        ("False", "false"),
+                        ("True", "true"),
                         ]
-        colModel_string = str(colModel).lower()
+        colModel_string = str(colModel)
 
         for replace in replace_list:
             colModel_string = colModel_string.replace(replace[0], replace[1])
@@ -267,7 +269,7 @@ class DjangoJqgrid(object):
             default_colModel['search'] = False
 
         #Formatter and formatoptions
-        formatter, format_options = self.__get_field_format_options(type(self.model._meta.get_field(field)).__name__)
+        formatter, format_options = self.__get_field_format_options(type(self.model._meta.get_field(field)).__name__,)
         if formatter:
             default_colModel['formatter'] = formatter
             default_colModel['formatoptions'] = format_options

@@ -101,7 +101,7 @@ class IntegerField(Field):
 
     def get_format_options(self):
         """
-        Return the formatter and formatoptions string for EmailField
+        Return the formatter and formatoptions string for IntegerField
         """
         return False, ""
 
@@ -122,7 +122,7 @@ class BigIntegerField(Field):
 
     def get_format_options(self):
         """
-        Return the formatter and formatoptions string for EmailField
+        Return the formatter and formatoptions string for BigIntegerField
         """
         return False, ""
 
@@ -143,7 +143,7 @@ class PositiveIntegerField(Field):
 
     def get_format_options(self):
         """
-        Return the formatter and formatoptions string for EmailField
+        Return the formatter and formatoptions string for PositiveIntegerField
         """
         return False, ""
 
@@ -164,7 +164,7 @@ class SmallIntegerField(Field):
 
     def get_format_options(self):
         """
-        Return the formatter and formatoptions string for EmailField
+        Return the formatter and formatoptions string for SmallIntegerField
         """
         return False, ""
 
@@ -185,7 +185,7 @@ class DecimalField(Field):
 
     def get_format_options(self):
         """
-        Return the formatter and formatoptions string for EmailField
+        Return the formatter and formatoptions string for DecimalField
         """
         return False, ""
 
@@ -206,7 +206,7 @@ class FloatField(Field):
 
     def get_format_options(self):
         """
-        Return the formatter and formatoptions string for EmailField
+        Return the formatter and formatoptions string for FloatField
         """
         return False, ""
 
@@ -230,7 +230,7 @@ class DateField(Field):
 
     def get_format_options(self):
         """
-        Return the formatter and formatoptions string for EmailField
+        Return the formatter and formatoptions string for DateField
         """
         return False, ""
 
@@ -254,7 +254,7 @@ class TimeField(Field):
 
     def get_format_options(self):
         """
-        Return the formatter and formatoptions string for EmailField
+        Return the formatter and formatoptions string for TimeField
         """
         return False, ""
 
@@ -278,7 +278,7 @@ class DateTimeField(Field):
 
     def get_format_options(self):
         """
-        Return the formatter and formatoptions string for EmailField
+        Return the formatter and formatoptions string for DateTimeField
         """
         return False, ""
 
@@ -302,7 +302,7 @@ class CharField(Field):
 
     def get_format_options(self):
         """
-        Return the formatter and formatoptions string for EmailField
+        Return the formatter and formatoptions string for CharField
         """
         return False, ""
 
@@ -326,7 +326,7 @@ class TextField(Field):
 
     def get_format_options(self):
         """
-        Return the formatter and formatoptions string for EmailField
+        Return the formatter and formatoptions string for TextField
         """
         return False, ""
 
@@ -350,7 +350,7 @@ class BooleanField(Field):
 
     def get_format_options(self):
         """
-        Return the formatter and formatoptions string for EmailField
+        Return the formatter and formatoptions string for BooleanField
         """
         return False, ""
 
@@ -375,9 +375,34 @@ class EmailField(Field):
     def get_format_options(self):
         """
         Return the formatter and formatoptions string for EmailField
-        formatter: 'showlink', ""
+        formatter: 'email', ""
         """
         return "email", ""
+
+
+class URLField(Field):
+
+    def convert_field_to_js(self, field_value):
+        try:
+            return str(field_value)
+
+        except Exception as e: raise ValueError(e)
+
+    def convert_field_to_model(self, field_value):
+        try:
+            return str(field_value)
+
+        except Exception as e: raise ValueError(e)
+
+    def get_search_options(self):
+        return {"sopt":["bw", "bn", "in", "ni", "ew", "en", "cn", "nc"]}
+
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for URLField
+        formatter: 'link',
+        """
+        return "link", {"target": "_blank"}
 
 
 #Concrete Relationship Fields
@@ -404,6 +429,6 @@ class ForeignKey(RelationShipField):
 
     def get_format_options(self):
         """
-        Return the formatter and formatoptions string for EmailField
+        Return the formatter and formatoptions string for ForeignKey
         """
         return False, ""
