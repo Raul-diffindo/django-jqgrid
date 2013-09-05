@@ -8,13 +8,12 @@ from fields import FieldDispatcher
 
 
 class DjangoJqgrid(object):
-
     """
     Class to manage jqGrid from Django
     """
 
-    def __init__(self, app_label, model_name, url, models_fields_selected = [], edit_url = '', table_id = '', div_id = '',
-                 data_type = 'json', caption = ''):
+    def __init__(self, app_label, model_name, url, models_fields_selected=[], edit_url='', table_id='', div_id='',
+                 data_type='json', caption=''):
         """
         Create a new DjangoJqgrid class instance.
 
@@ -48,8 +47,8 @@ class DjangoJqgrid(object):
         self.caption = caption
 
 
-    def get_objects(self, page = 1, limit = '', sidx = '', sord = '', search = '', searchField = False,
-                    searchOper = False, searchString = False):
+    def get_objects(self, page=1, limit='', sidx='', sord='', search='', searchField=False,
+                    searchOper=False, searchString=False):
         """
         Return all or objects filtered from self.model.
 
@@ -91,7 +90,7 @@ class DjangoJqgrid(object):
         for row in objects_page.object_list:
 
             line = {
-                "id" : row.id,
+                "id": row.id,
                 "cell": [i, ]
             }
 
@@ -109,7 +108,6 @@ class DjangoJqgrid(object):
             return simplejson.dumps(results, indent=4)
 
 
-
     #Private Method. Do not Touch!
     def __convert_data(self, field, field_value):
         """
@@ -123,9 +121,10 @@ class DjangoJqgrid(object):
                 field_value
             )
 
-        except (ValueError, InvalidOperation): raise ValueError
-        except NotImplementedError: pass
-
+        except (ValueError, InvalidOperation):
+            raise ValueError
+        except NotImplementedError:
+            pass
 
 
     #Private Method. Do not Touch!
@@ -185,7 +184,7 @@ class DjangoJqgrid(object):
         Return the object edited.
         """
         try:
-            object_for_update = self.model.objects.get(id = object_id)
+            object_for_update = self.model.objects.get(id=object_id)
 
             for field in self.fields:
                 if request.POST.get(field) != '':
@@ -206,30 +205,29 @@ class DjangoJqgrid(object):
         Return True or False if the oper has been accomplished
         """
         try:
-            self.model.objects.get(id = object_id).delete()
+            self.model.objects.get(id=object_id).delete()
             return True
         except Exception as e:
             return False
 
-        
+
     #Private Method. Do not Touch!
     def __rescue_convert_data(self, data_type, field, request):
         """
         Private method to convert data from jqGrid to model fields.
         """
         try:
-            return FieldDispatcher().convert_field_to_model(self.model,  field, data_type, request.POST.get(field))
+            return FieldDispatcher().convert_field_to_model(self.model, field, data_type, request.POST.get(field))
 
         except NotImplementedError:
             pass
-
 
 
     def get_colmodel(self):
         """
         From fields of model return the jqGrid colModel field.
         """
-        colModel = [{'name':'id','index':'id','width':40, 'search': False, 'align':'center', 'editable': False,} ]
+        colModel = [{'name': 'id', 'index': 'id', 'width': 40, 'search': False, 'align': 'center', 'editable': False, }]
 
         for field in self.fields:
             colModel.append(self.__colmodel_of_field(field, self.model._meta.get_field(field).get_internal_type()))
@@ -238,7 +236,9 @@ class DjangoJqgrid(object):
 
 
     def __adjust_colmodel_string(self, colModel):
-        replace_list = [("'sopt'", "sopt")]
+        replace_list = [("'sopt'", "sopt"), ("'formatter'", "formatter"), ("'formatoptions'", "formatoptions"),
+                        ("'baselinkurl'", "baselinkurl"), ("'showaction'", "showaction"),
+                        ]
         colModel_string = str(colModel).lower()
 
         for replace in replace_list:
@@ -252,12 +252,13 @@ class DjangoJqgrid(object):
         Private method to compose one field of jqGrid colModel field.
         """
         default_colModel = {
-            'name': field.encode('ascii','ignore'),
-            'index': field.encode('ascii','ignore'),
+            'name': field.encode('ascii', 'ignore'),
+            'index': field.encode('ascii', 'ignore'),
             'width': 100,
             'editable': True,
         }
 
+        #Search Options
         search_options = self.__get_field_search_options(data_type)
         if search_options:
             default_colModel['search'] = True
@@ -265,7 +266,14 @@ class DjangoJqgrid(object):
         else:
             default_colModel['search'] = False
 
+        #Formatter and formatoptions
+        formatter, format_options = self.__get_field_format_options(type(self.model._meta.get_field(field)).__name__)
+        if formatter:
+            default_colModel['formatter'] = formatter
+            default_colModel['formatoptions'] = format_options
+
         return default_colModel
+
 
     def __get_field_search_options(self, data_type):
         """
@@ -276,6 +284,14 @@ class DjangoJqgrid(object):
         except NotImplementedError:
             pass
 
+    def __get_field_format_options(self, data_type):
+        """
+        Private method to get the Format options string for a field type.
+        """
+        try:
+            return FieldDispatcher().get_format_options(data_type)
+        except NotImplementedError:
+            return False, False
 
 
     def get_colnames(self):
@@ -285,7 +301,7 @@ class DjangoJqgrid(object):
         colNames = ['N']
 
         for field in self.fields:
-            colNames.append(field.encode('ascii','ignore').capitalize())
+            colNames.append(field.encode('ascii', 'ignore').capitalize())
 
         return str(colNames).encode('ascii', 'xmlcharrefreplace')
 

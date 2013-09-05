@@ -29,7 +29,6 @@ class FieldDispatcher(object):
             else:
                 return field_class().convert_field_to_model(model, field, field_value)
         except Exception as e:
-            assert False, e
             raise NotImplementedError(e)
 
 
@@ -37,6 +36,14 @@ class FieldDispatcher(object):
         try:
             field_class = getattr(sys.modules[__name__], data_type)
             return field_class().get_search_options()
+        except Exception as e:
+            raise NotImplementedError(e)
+
+
+    def get_format_options(self, data_type):
+        try:
+            field_class = getattr(sys.modules[__name__], data_type)
+            return field_class().get_format_options()
         except Exception as e:
             raise NotImplementedError(e)
 
@@ -56,6 +63,9 @@ class Field(object):
     def get_search_options(self):
         pass
 
+    def get_format_options(self):
+        pass
+
 
 #Interface Relationship Fields:
 class RelationShipField(object):
@@ -67,6 +77,9 @@ class RelationShipField(object):
         pass
 
     def get_search_options(self):
+        pass
+
+    def get_format_options(self):
         pass
 
 
@@ -86,6 +99,12 @@ class IntegerField(Field):
     def get_search_options(self):
         return {"sopt":["eq", "ne", "lt", "le", "gt", "ge"]}
 
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        """
+        return False, ""
+
 
 class BigIntegerField(Field):
 
@@ -100,6 +119,12 @@ class BigIntegerField(Field):
 
     def get_search_options(self):
         return {"sopt":["eq", "ne", "lt", "le", "gt", "ge"]}
+
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        """
+        return False, ""
 
 
 class PositiveIntegerField(Field):
@@ -116,6 +141,12 @@ class PositiveIntegerField(Field):
     def get_search_options(self):
         return {"sopt":["eq", "ne", "lt", "le", "gt", "ge"]}
 
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        """
+        return False, ""
+
 
 class SmallIntegerField(Field):
 
@@ -130,6 +161,12 @@ class SmallIntegerField(Field):
 
     def get_search_options(self):
         return {"sopt":["eq", "ne", "lt", "le", "gt", "ge"]}
+
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        """
+        return False, ""
 
 
 class DecimalField(Field):
@@ -146,6 +183,12 @@ class DecimalField(Field):
     def get_search_options(self):
         return {"sopt":["eq", "ne", "lt", "le", "gt", "ge"]}
 
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        """
+        return False, ""
+
 
 class FloatField(Field):
 
@@ -160,6 +203,12 @@ class FloatField(Field):
 
     def get_search_options(self):
         return {"sopt":["eq", "ne", "lt", "le", "gt", "ge"]}
+
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        """
+        return False, ""
 
 
 class DateField(Field):
@@ -179,6 +228,12 @@ class DateField(Field):
     def get_search_options(self):
         return {"sopt":["eq", "ne", "lt", "le", "gt", "ge"]}
 
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        """
+        return False, ""
+
 
 class TimeField(Field):
 
@@ -196,6 +251,12 @@ class TimeField(Field):
 
     def get_search_options(self):
         return {"sopt":["eq", "ne", "lt", "le", "gt", "ge"]}
+
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        """
+        return False, ""
 
 
 class DateTimeField(Field):
@@ -215,6 +276,12 @@ class DateTimeField(Field):
     def get_search_options(self):
         return {"sopt":["eq", "ne", "lt", "le", "gt", "ge"]}
 
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        """
+        return False, ""
+
 
 class CharField(Field):
 
@@ -232,6 +299,12 @@ class CharField(Field):
 
     def get_search_options(self):
         return {"sopt":["bw", "bn", "in", "ni", "ew", "en", "cn", "nc"]}
+
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        """
+        return False, ""
 
 
 class TextField(Field):
@@ -251,6 +324,12 @@ class TextField(Field):
     def get_search_options(self):
         return {"sopt":["bw", "bn", "in", "ni", "ew", "en", "cn", "nc"]}
 
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        """
+        return False, ""
+
 
 class BooleanField(Field):
 
@@ -268,6 +347,37 @@ class BooleanField(Field):
 
     def get_search_options(self):
         return {"sopt":["eq", "ne", ]}
+
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        """
+        return False, ""
+
+
+class EmailField(Field):
+
+    def convert_field_to_js(self, field_value):
+        try:
+            return str(field_value)
+
+        except Exception as e: raise ValueError(e)
+
+    def convert_field_to_model(self, field_value):
+        try:
+            return str(field_value)
+
+        except Exception as e: raise ValueError(e)
+
+    def get_search_options(self):
+        return {"sopt":["bw", "bn", "in", "ni", "ew", "en", "cn", "nc"]}
+
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        formatter: 'showlink', ""
+        """
+        return "email", ""
 
 
 #Concrete Relationship Fields
@@ -291,3 +401,9 @@ class ForeignKey(RelationShipField):
 
     def get_search_options(self):
         return {"sopt":["eq", "ne", ]}
+
+    def get_format_options(self):
+        """
+        Return the formatter and formatoptions string for EmailField
+        """
+        return False, ""
