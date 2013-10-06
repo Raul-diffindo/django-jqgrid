@@ -223,30 +223,23 @@ class DjangoJqgrid(object):
             pass
 
 
-    def get_colmodel(self):
+    def get_colmodel(self, to_add_colmodel=[]):
         """
         From fields of model return the jqGrid colModel field.
+
+        to_add_colmodel=[{'name': 'aname', type: 'valid_type'}]
         """
-        colModel = [{'name': 'id', 'index': 'id', 'width': 40, 'search': False, 'align': 'center', 'editable': False, }]
+        colModel = [{'name': 'id', 'index': 'id', 'width': 40, 'search': 'false', 'align': 'center', 'editable': 'false', 'key':'true'}]
 
         for field in self.fields:
             colModel.append(self.__colmodel_of_field(field, self.model._meta.get_field(field).get_internal_type()))
 
-        return self.__adjust_colmodel_string(colModel)
+        if to_add_colmodel:
+            for field in to_add_colmodel:
+                colModel.append(self.__colmodel_of_field(field['name'], field['type']))
 
+        return colModel
 
-    def __adjust_colmodel_string(self, colModel):
-        replace_list = [("'sopt'", "sopt"), ("'formatter'", "formatter"), ("'formatoptions'", "formatoptions"),
-                        ("'baseLinkUrl'", "baseLinkUrl"), ("'addParam'", "addParam"), ("'target'", "target"),
-                        ("False", "false"),
-                        ("True", "true"),
-                        ]
-        colModel_string = str(colModel)
-
-        for replace in replace_list:
-            colModel_string = colModel_string.replace(replace[0], replace[1])
-
-        return colModel_string
 
     #Private Method. Do not Touch!
     def __colmodel_of_field(self, field, data_type):
@@ -257,19 +250,19 @@ class DjangoJqgrid(object):
             'name': field.encode('ascii', 'ignore'),
             'index': field.encode('ascii', 'ignore'),
             'width': 100,
-            'editable': True,
+            'editable': 'true',
         }
 
         #Search Options
         search_options = self.__get_field_search_options(data_type)
         if search_options:
-            default_colModel['search'] = True
+            default_colModel['search'] = 'true'
             default_colModel['searchoptions'] = search_options
         else:
-            default_colModel['search'] = False
+            default_colModel['search'] = 'false'
 
         #Formatter and formatoptions
-        formatter, format_options = self.__get_field_format_options(type(self.model._meta.get_field(field)).__name__,)
+        formatter, format_options = self.__get_field_format_options(data_type)
         if formatter:
             default_colModel['formatter'] = formatter
             default_colModel['formatoptions'] = format_options
@@ -296,7 +289,7 @@ class DjangoJqgrid(object):
             return False, False
 
 
-    def get_colnames(self):
+    def get_colnames(self, to_append_colnames=[]):
         """
         Return the jqGrid colNames field from model fields.
         """
@@ -305,7 +298,11 @@ class DjangoJqgrid(object):
         for field in self.fields:
             colNames.append(field.encode('ascii', 'ignore').capitalize())
 
-        return str(colNames).encode('ascii', 'xmlcharrefreplace')
+        if to_append_colnames:
+            for field in to_append_colnames:
+                colNames.append(field.encode('ascii', 'ignore').capitalize())
+
+        return colNames
 
 
     def get_id_tablegrid(self):
@@ -313,7 +310,7 @@ class DjangoJqgrid(object):
         Return the jqGrid table id. If it is None return app-model-grid
         """
         if not self.table_id == '': return self.table_id
-        return self.app + '-' + self.model._meta.verbose_name_plural + '-grid'
+        return self.app + '-' + self.model._meta.verbose_name_plural.lower().replace(" ","_") + '-grid'
 
 
     def get_id_divgrid(self):
@@ -321,7 +318,7 @@ class DjangoJqgrid(object):
         Return the jqGrid div id. If it is None return app-model
         """
         if not self.div_id == '': return self.div_id
-        return self.app + '-' + self.model._meta.verbose_name_plural
+        return self.app + '-' + self.model._meta.verbose_name_plural.lower().replace(" ","_")
 
 
     def get_edit_url(self):

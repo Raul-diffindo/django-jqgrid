@@ -30,6 +30,8 @@ class Customer(models.Model):
     telephone_number = models.CharField(max_length=15, null=True, default=' ')
     email = models.EmailField(null=True)
     web = models.URLField(null=True)
+    file_card = models.FileField(null=True, upload_to='files/%Y/%m/%d')
+    file_card_path = models.FilePathField(null=True)
     notes = models.TextField(null=True, default=' ')
     active = models.BooleanField(default=False)
     group = models.ForeignKey(Group)
