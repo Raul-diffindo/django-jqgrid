@@ -1,3 +1,4 @@
+{% load django_jqgrid_extras %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -18,9 +19,17 @@
 	<script>
         jQuery("#{{ jqgrid_table_id }}").jqGrid({ url:'{{ jqgrid_url }}', datatype: "{{ jqgrid_datatype }}",
 
-            colNames:{{ jqgrid_colnames|safe  }},
+            colNames: [
+                {% for col in jqgrid_colnames %}
+                    "{{ col }}",
+                {% endfor %}
+            ],
+            colModel: [
+                {% for col in jqgrid_colmodel %}
+                    {{ col|adjust_jqgrid_colmodel|safe }},
+                {% endfor %}
 
-            colModel: {{ jqgrid_colmodel|safe }},
+            ],
 
             rowNum:20, rowList:[10,20,30,50,100],
             pager: '#{{ jqgrid_div_id }}',
