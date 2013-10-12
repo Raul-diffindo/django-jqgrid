@@ -12,4 +12,7 @@ def adjust_jqgrid_colmodel(colmodel_line):
     for option in STRINGS_TO_REPLACE:
         colmodel_line = str(colmodel_line).replace(option, option.replace("'",""))
 
+    if 'True' in colmodel_line: colmodel_line = colmodel_line.replace('True', 'true')
+    if 'False' in colmodel_line: colmodel_line = colmodel_line.replace('False', 'true')
+
     return colmodel_line
