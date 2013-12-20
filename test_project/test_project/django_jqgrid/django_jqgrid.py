@@ -46,6 +46,12 @@ class DjangoJqgrid(object):
         self.data_type = data_type
         self.caption = caption
 
+        self.__colmodel = []
+
+
+    @property
+    def get_col_model(self):
+        return self.__colmodel
 
     def get_objects(self, page=1, limit='', sidx='', sord='', search='', searchField=False,
                     searchOper=False, searchString=False):
@@ -229,17 +235,20 @@ class DjangoJqgrid(object):
 
         to_add_colmodel=[{'name': 'aname', type: 'valid_type'}]
         """
-        colModel = [{'name': 'id', 'index': 'id', 'width': 40, 'search': 'false', 'align': 'center', 'editable': 'false', 'key':'true'}]
+        if not self.__colmodel:
+            if with_id:
+                self.__colmodel.append({'name': 'id', 'index': 'id', 'width': 40, 'search': 'false', 'align': 'center',
+                             'editable': 'false', 'key':'true'})
 
-        for field in self.fields:
-            colModel.append(self.__colmodel_of_field(field, self.model._meta.get_field(field).get_internal_type()))
+            for field in self.fields:
+                self.__colmodel.append(self.__colmodel_of_field(field, self.model._meta.get_field(field).get_internal_type()))
 
         if to_add_colmodel:
             for field in to_add_colmodel:
-                colModel.append(self.__colmodel_of_field(field['name'], field['type']))
+                self.__colmodel.append(self.__colmodel_of_field(field['name'], field['type']))
 
-        return colModel
-        #return self.__adjust_colmodel_string(colModel)
+
+        return self.__colmodel
 
 
     #Private Method. Do not Touch!
@@ -251,16 +260,16 @@ class DjangoJqgrid(object):
             'name': field.encode('ascii', 'ignore'),
             'index': field.encode('ascii', 'ignore'),
             'width': 100,
-            'editable': 'true',
+            'editable': True,
         }
 
         #Search Options
         search_options = self.__get_field_search_options(data_type)
         if search_options:
-            default_colModel['search'] = 'true'
+            default_colModel['search'] = True
             default_colModel['searchoptions'] = search_options
         else:
-            default_colModel['search'] = 'false'
+            default_colModel['search'] = False
 
         #Formatter and formatoptions
         formatter, format_options = self.__get_field_format_options(data_type)
@@ -343,3 +352,39 @@ class DjangoJqgrid(object):
         """
         return self.data_type
 
+    def mark_col_as_editable(self, column, value):
+        if isinstance(value, bool):
+
+            if not self.__colmodel:
+                self.get_colmodel()
+
+            for col in self.__colmodel:
+                if col['name'] == column:
+                    col['editable'] = value
+                    return True
+        else:
+            return False
+
+    def mark_col_with_search(self, column, value):
+        if isinstance(value, bool):
+
+            if not self.__colmodel:
+                self.get_colmodel()
+
+            for col in self.__colmodel:
+                if col['name'] == column:
+                    col['search'] = value
+                    return True
+        else:
+            return False
+
+    def mark_col_with_value(self, column, field, value):
+
+        if not self.__colmodel:
+                self.get_colmodel()
+
+        for col in self.__colmodel:
+            if col['name'] == column:
+                col[field] = value
+                return True
+        return False

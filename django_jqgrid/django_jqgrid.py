@@ -236,16 +236,17 @@ class DjangoJqgrid(object):
         to_add_colmodel=[{'name': 'aname', type: 'valid_type'}]
         """
         if not self.__colmodel:
-            colModel = [{'name': 'id', 'index': 'id', 'width': 40, 'search': 'false', 'align': 'center', 'editable': 'false', 'key':'true'}]
+            if with_id:
+                self.__colmodel.append({'name': 'id', 'index': 'id', 'width': 40, 'search': 'false', 'align': 'center',
+                             'editable': 'false', 'key':'true'})
 
             for field in self.fields:
-                colModel.append(self.__colmodel_of_field(field, self.model._meta.get_field(field).get_internal_type()))
+                self.__colmodel.append(self.__colmodel_of_field(field, self.model._meta.get_field(field).get_internal_type()))
 
-            if to_add_colmodel:
-                for field in to_add_colmodel:
-                    colModel.append(self.__colmodel_of_field(field['name'], field['type']))
+        if to_add_colmodel:
+            for field in to_add_colmodel:
+                self.__colmodel.append(self.__colmodel_of_field(field['name'], field['type']))
 
-            self.__colmodel = colModel
 
         return self.__colmodel
 
@@ -352,7 +353,11 @@ class DjangoJqgrid(object):
         return self.data_type
 
     def mark_col_as_editable(self, column, value):
-        if value in [True, False]:
+        if isinstance(value, bool):
+
+            if not self.__colmodel:
+                self.get_colmodel()
+
             for col in self.__colmodel:
                 if col['name'] == column:
                     col['editable'] = value
@@ -361,7 +366,11 @@ class DjangoJqgrid(object):
             return False
 
     def mark_col_with_search(self, column, value):
-        if value in [True, False]:
+        if isinstance(value, bool):
+
+            if not self.__colmodel:
+                self.get_colmodel()
+
             for col in self.__colmodel:
                 if col['name'] == column:
                     col['search'] = value
@@ -369,7 +378,11 @@ class DjangoJqgrid(object):
         else:
             return False
 
-    def marck_col_with_value(self, column, field, value):
+    def mark_col_with_value(self, column, field, value):
+
+        if not self.__colmodel:
+                self.get_colmodel()
+
         for col in self.__colmodel:
             if col['name'] == column:
                 col[field] = value
