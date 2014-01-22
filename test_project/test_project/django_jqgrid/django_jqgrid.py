@@ -1,4 +1,5 @@
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
+from django.db.models import FieldDoesNotExist
 from django.db.models.loading import get_model
 from django.utils import simplejson
 from decimal import *
@@ -229,19 +230,24 @@ class DjangoJqgrid(object):
             pass
 
 
-    def get_colmodel(self, to_add_colmodel=[]):
+    def get_colmodel(self, to_add_colmodel=[], with_id=True):
         """
         From fields of model return the jqGrid colModel field.
 
         to_add_colmodel=[{'name': 'aname', type: 'valid_type'}]
         """
+
         if not self.__colmodel:
             if with_id:
                 self.__colmodel.append({'name': 'id', 'index': 'id', 'width': 40, 'search': 'false', 'align': 'center',
                              'editable': 'false', 'key':'true'})
 
             for field in self.fields:
-                self.__colmodel.append(self.__colmodel_of_field(field, self.model._meta.get_field(field).get_internal_type()))
+                try:
+                    self.__colmodel.append(self.__colmodel_of_field(field,
+                                           self.model._meta.get_field(field).get_internal_type()))
+                except FieldDoesNotExist:
+                    pass
 
         if to_add_colmodel:
             for field in to_add_colmodel:
@@ -249,7 +255,6 @@ class DjangoJqgrid(object):
 
 
         return self.__colmodel
-
 
     #Private Method. Do not Touch!
     def __colmodel_of_field(self, field, data_type):
